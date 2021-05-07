@@ -1,132 +1,109 @@
 # Notes vrac
 
-## Contexte
+**NOTE** : l'analyse du code CH est décrite dans [un autre fichier de notes](./analyse_code_CH.md).
 
-On s'intéresse à l'ordering/contraction en tirant le fil à partir de [l'exemple donné dans le README](https://github.com/phidra/RoutingKit/blob/a7db9cdabaadb2865fa6dd9b99906b616e679c3b/README.md) :
+## Fichiers intéressants
 
-```cpp
-auto ch = ContractionHierarchy::build(
-    graph.node_count(),
-    tail, graph.head,
-    graph.travel_time
-);
+Je constate que la plupart des fichiers de RoutingKit/src sont des binaires ! Les seuls fichiers qui sont "utilitaires" sont :
+
+```sh
+grep -L "int main" RoutingKit/src/*.cpp
+
+bit_select.cpp                    # fonctions utilitaires de manipulation de buffers
+bit_vector.cpp                    # self-documenting name
+buffered_asynchronous_reader.cpp  # self-documenting name
+contraction_hierarchy.cpp               # GROS fichier, implémentant CH
+customizable_contraction_hierarchy.cpp  # GROS fichier, implémentant CCH
+expect.cpp                        # fonctions utilitaires pour les assert
+file_data_source.cpp              # semble être une abstraction d'un fichier
+geo_position_to_node.cpp          #
+graph_util.cpp                    #
+id_mapper.cpp                     #
+nested_dissection.cpp             #
+osm_decoder.cpp                   #
+osm_graph_builder.cpp             #
+osm_profile.cpp                   #
+osm_simple.cpp                    #
+protobuf.cpp                      #
+strongly_connected_component.cpp  #
+timer.cpp                         #
+vector_io.cpp                     #
+verify.cpp                        #
 ```
 
-## Grosses mailles = fonction `ContractionHierarchy::build`
 
-C'est une fonction statique de la classe `ContractionHierarchy` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/contraction_hierarchy.h#L22).
+Les fichiers importants sont plus visibles si je classe par taille de fichiers :
 
-Quels sont ses paramètres d'appel [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1093) :
+```sh
+grep -L "int main" *.cpp | while read line
+do
+wc -l $line
+done | sort -n
 
-```cpp
-ContractionHierarchy ContractionHierarchy::build(
-    unsigned node_count,
-    std::vector<unsigned>tail,
-    std::vector<unsigned>head,
-    std::vector<unsigned>weight,
-    const std::function<void(std::string)>&log_message,  // default-value = fonction vide
-    unsigned max_pop_count  // default-value = 500
-)
+5    expect.cpp
+18   timer.cpp
+37   protobuf.cpp
+64   vector_io.cpp
+95   verify.cpp
+99   strongly_connected_component.cpp
+101  bit_select.cpp
+129  id_mapper.cpp
+155  osm_simple.cpp
+167  graph_util.cpp
+185  buffered_asynchronous_reader.cpp
+188  file_data_source.cpp
+232  geo_position_to_node.cpp
+529  bit_vector.cpp
+765  osm_decoder.cpp
+801  osm_profile.cpp
+830  osm_graph_builder.cpp
+882  nested_dissection.cpp
+1920 customizable_contraction_hierarchy.cpp
+2217 contraction_hierarchy.cpp
 ```
 
-On reçoit donc le graphe sous la forme d'une EdgeList comportant trois vector, comportant N (=nb edges) items :
-- node_from = tail (int)
-- node_to = head (int)
-- weight (int)
+## Généralités / vrac
 
-NdM : j'aime beaucoup la dénomination **head** et **tail**, que je trouve plus courte et moins ambigües que node_from/node_to.
+- Doc intéressante = comment builder : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/Setup.md)
+- Doc intéressante = contraction hierarchy : [lien](https://github.com/RoutingKit/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/ContractionHierarchy.md)
+- Ils mentionnent le bucket-sort comme un algo de tri plus rapide pour trier les `int` : [lien wikipedia](https://en.wikipedia.org/wiki/Bucket_sort)
+- Le build de la CH semble paramétré par un `max_pop_count`
+- Au sujet de l'ordering :
 
-On builde une instance vide de la classe ContractionHierarchy, et ContractionHierarchyExtraInfo [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1103) :
+    > A central component of the preprocessing consists of computing a so-called contraction order.
+    > This is an ordering of the input nodes.
+    > A significant fraction of the preprocessing running time is spent computing this order.
+    > It can therefore be beneficial to store this ordering to accelerated the preprocessing.
 
-```cpp
-    ContractionHierarchy ch;
-    ContractionHierarchyExtraInfo ch_extra;
-```
+- Il y a des fonctions pour sauvegarder l'ordering et la contraction sur le disque.
+- La construction d'un query-object est lourde (et à recycler).
+- Une fois la query traitée, l'objet expose des fonctions pour récupérer :
+    - la distance entre source et target
+    - le chemin sous forme d'une liste de nodes
+    - le chemin sous forme d'une liste d'arcs
+- On dirait que la license du code permet de réutiliser le code : [lien vers la LICENSE](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/LICENSE)
+- La parallélisation peut-être parallélisée.
+- On dirait que des customisations partielles (seulement quelques arcs) font l'objet d'une fonction (qui serait plus rapide ?), ça peut être utile : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/CustomizableContractionHierarchy.md#customizablecontractionhierarchypartialcustomization)
+- Il y a toute une section dédiée au travail avec OSM, notamment il y a ce qu'il faut pour extraire facilement des graphes voiture/piéton : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/OpenStreetMap.md)
+- Notion d'inverse permutation ?
+    - j'ai l'impression qu'il s'agit de "retrouver" un objet à partir de sa propriété
+    - par exemple, si chaque node est ranké, je peux stocker :
+        + un vector V1 dont l'index est le node, et le contenu est son rank
+        + un vector V2 dont l'index est le rank, et le contenu est l'id du node ayant ce rank
+    - d'après ce que je comprends [de cette doc](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/SupportFunctions.md), alors V1 est la permutation inverse de V2 (et vice-versa) :
 
-La classe `ContractionHierarchyExtraInfo` semble être simplement une structure qui stocke le mid-node (probablement le node responsable de la création d'un shortcut lorsqu'on le contracte) [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L599).
+    ```cpp
+    vector<unsigned>p = {3,0,2,1};
+    vector<unsigned>inv_p = invert_permutation(p);
+    assert(inv_p[0] == 1);
+    assert(inv_p[1] == 3);
+    assert(inv_p[2] == 2);
+    assert(inv_p[3] == 0);
+    ```
 
-On cleane un peu les edges en entrée [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1111), et on les trie :
+    - c'est corroboré par le fait que `rank` et `order` sont `invert_permutation` l'une de l'autre : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L964) :
 
-```cpp
-sort_arcs_and_remove_multi_and_loop_arcs(node_count, tail, head, weight, input_arc_id, log_message);
-```
-
-**QUESTION** : les arcs sont triés par quoi exactement ? (possiblement par {tail, head})
-
-In fine, toute cette fonction sert surtout à wrapper `build_ch_and_order` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1116).
-
-
-## fonction `build_ch_and_order`
-
-Les paramètres d'appels [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L608) :
-
-```cpp
-void build_ch_and_order(
-    Graph& graph,
-    ContractionHierarchy& ch,
-    ContractionHierarchyExtraInfo&ch_extra,
-    unsigned max_pop_count,
-    const std::function<void(std::string)>& log_message
-)
-```
-
-Comprendre cette fonction nécessite de s'intéresser à d'autres structures.
-
-Déroulé (to be continued) :
-
-
-On commence par ajouter dans la queue tous les noeuds du graphe, en estimant leur importance [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L632) :
-
-```cpp
-for(unsigned i=0; i<node_count; ++i) {
-    queue.push({i, estimate_node_importance(graph, shorter_path_test, i)});
-}
-```
-
-### pré-requis = structure `Graph::Arc`
-
-C'est une structure interne à `Graph`, qui représente un edge partant d'un node `N` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L180) :
-
-- `node` de destination
-- `weight` de l'arc
-- `hop_length` (c'est quoi ? il est initialisé à `1` lorsqu'on créée le graphe → possiblement, c'est le nombre de contractions qu'il représente ?)
-- `mid_node` = sans doute le noeud contracté (initialisé à invalid_id → ça indique que les arcs initiaux sont des arcs "réels", non-issus de la contraction d'un node)
-
-### structure `Graph`
-
-À confirmer en analysant, ça semble être la structure représentant le graphe en cours de contraction [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L83).
-
-On dirait que le graphe est représenté sous-forme d'une liste d'adjacence (ce sont ses seuls attributs), stockant les in-edges et les out-edges [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L226) :
-
-```cpp
-std::vector<std::vector<Arc>>out_, in_;
-std::vector<unsigned>level_;
-```
-
-De plus, chaque noeud se voit attribuer un `level` qui n'est pas encore clair (mais qui est iniitalisé à 0 [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L90)).
-
-
-Son initialisation est assez straightforward = on itère sur chaque edge passé au contructeur, et on remplit les in-edges et out-edges de chaque noeud [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L92) :
-
-```cpp
-for(unsigned a=0; a<head.size(); ++a){
-    unsigned x = tail[a];
-    unsigned y = head[a];
-    unsigned w = weight[a];
-
-
-    if(x != y){
-        out_[x].push_back({y, w, 1, invalid_id});
-        in_[y].push_back({x, w, 1, invalid_id});
-    }
-}
-```
-
-## À creuser un peu plus
-
-- la fonction `sort_arcs_and_remove_multi_and_loop_arcs` [lien de l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1111) , [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L17)
-- la classe `ShorterPathTest` [lien de l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L625), [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L230) 
-- la classe `MinIDQueue` [lien de l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L629), [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/id_queue.h) (c'est une pririty-queue qui stocke des ids (integer), en les classant selon un poids (appelé "key"), lui aussi entier. La fonction `pop` renvoie l'id qui a la plus **petite** key [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/id_queue.h#L78)
-- les permutations [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/permutation.h)
-- la fonction `estimate_node_importance` [lien vers l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L633), [lien vers la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L527)
-- `hop_length` [lien vers la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L183)
+    ```cpp
+    ch.rank = invert_permutation(new_order);
+    ch.order = std::move(new_order);
+    ```
