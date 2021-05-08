@@ -68,3 +68,14 @@ Similairement, il existe des fonctions et structures équivalentes pour les grap
 - `simple_load_osm_pedestrian_routing_graph_from_pbf` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/osm_simple.h#L54))
 
 De même, il existe les fonctions équivalentes pour les vélos.
+
+## Infos parsées
+
+Les infos parsées intéressantes :
+- latitude / longitude des "routing-nodes"
+- `geo_distance`, ce qui semble être la longueur de l'edge
+
+Les infos manquantes :
+- géométrie de l'edge (on n'a que les points extrêmaux)
+- id de node OSM
+- id d'edge OSM
