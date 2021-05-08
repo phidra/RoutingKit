@@ -1,6 +1,10 @@
 # Notes vrac
 
-**NOTE** : l'analyse du code CH est décrite dans [un autre fichier de notes](./analyse_code_CH.md).
+**NOTE** : ce fichier contient des notes en vrac. D'autres fichiers plus spécifiques contiennent les notes de sujets particuliers :
+
+- l'analyse du code CH est décrite dans [ce fichier](./analyse_code_CH.md).
+- la construction de graphe à partir d'un fichier OSM (`file.pbf`) est décrite dans [ce fichier](./pbf_reading.md)
+- le fait dedessiner un graphe, i.e. construire une image (PNG, SVG, ...) à partir d'un graphe est décrite dans [ce fichier](./graph_drawing.md).
 
 ## Fichiers intéressants
 
