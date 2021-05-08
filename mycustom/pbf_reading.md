@@ -6,7 +6,7 @@
 
 L'objectif est de pouvoir utiliser les fichiers OSM pour créer les graphes.
 
-## Notes vrac
+## Point de départ
 
 Je pars du code du `main` indiqué dans le README [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/README.md) :
 
@@ -22,6 +22,8 @@ auto ch = ContractionHierarchy::build(
     graph.travel_time
 );
 ```
+
+## Graphe voiture
 
 La fonction `simple_load_osm_car_routing_graph_from_pbf` renvoie un `SimpleOSMCarRoutingGraph` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/osm_simple.h#L30)) :
 
@@ -58,3 +60,11 @@ Un point intéressant : d'après [cette doc](https://github.com/phidra/RoutingKi
 auto tail = invert_inverse_vector(graph.first_out);
 ```
 
+## Graphe piéton/bike
+
+Similairement, il existe des fonctions et structures équivalentes pour les graphes piétons :
+
+- `SimpleOSMPedestrianRoutingGraph` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/osm_simple.h#L37)), qui semble un peu plus simple que le graphe car (e.g. il n'a pas de turn-prohibition).
+- `simple_load_osm_pedestrian_routing_graph_from_pbf` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/osm_simple.h#L54))
+
+De même, il existe les fonctions équivalentes pour les vélos.
