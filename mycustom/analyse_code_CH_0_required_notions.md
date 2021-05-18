@@ -1,8 +1,27 @@
-# Analyse du code CH
+# Analyse du code CH — pré-requis
 
-**FIXME** : ces notes sont encore à réorganiser.
+Ces notes correspondent aux investigations sur les structures utilisées par le code de contraction.
 
-## Contexte
+Elles ne concernent **pas** directement le code de contraction, mais elles sont tout de même nécessaires pour le comprendre.
+
+* [Contexte et grosses mailles](#contexte-et-grosses-mailles)
+  * [Du point de départ à l'appel de build_ch_and_order](#du-point-de-départ-à-lappel-de-build_ch_and_order)
+  * [Classe ContractionHierarchy](#classe-contractionhierarchy)
+  * [Classe ContractionHierarchyExtraInfo](#classe-contractionhierarchyextrainfo)
+* [Structure Graph::Arc](#structure-grapharc)
+* [Structure Graph](#structure-graph)
+* [Classe ShorterPathTest](#classe-shorterpathtest)
+* [notion = hops](#notion--hops)
+* [Fonction estimate_node_importance](#fonction-estimate_node_importance)
+* [Notions : order, rank, et inverse permutation](#notions--order-rank-et-inverse-permutation)
+  * [TL;DR](#tldr)
+  * [rank et order](#rank-et-order)
+  * [Notion d'inverse permutation](#notion-dinverse-permutation)
+
+
+## Contexte et grosses mailles
+
+### Du point de départ à l'appel de `build_ch_and_order`
 
 Je m'intéresse à l'ordering/contraction en tirant le fil à partir de [l'exemple donné dans le README](https://github.com/phidra/RoutingKit/blob/a7db9cdabaadb2865fa6dd9b99906b616e679c3b/README.md) :
 
@@ -14,9 +33,7 @@ auto ch = ContractionHierarchy::build(
 );
 ```
 
-## Grosses mailles = fonction `ContractionHierarchy::build`
-
-C'est une fonction statique de la classe `ContractionHierarchy` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/contraction_hierarchy.h#L22).
+La contraction est donc réalisée en appelant la fonction `build`, fonction statique de la classe `ContractionHierarchy` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/contraction_hierarchy.h#L22)).
 
 Quels sont ses paramètres d'appel [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1093) :
 
@@ -31,21 +48,19 @@ ContractionHierarchy ContractionHierarchy::build(
 )
 ```
 
-On reçoit donc le graphe sous la forme d'une EdgeList comportant trois vector, comportant N (=nb edges) items :
-- node_from = tail (int)
-- node_to = head (int)
-- weight (int)
+On reçoit donc le graphe sous la forme d'une *EdgeList* comportant trois vector, comportant N (=nb edges) items :
+- `tail` représente le noeud **de départ** de l'edge ("node_from")
+- `head` représente le noeud **d'arrivée** de l'edge ("node_to")
+- `weight` représente le poids de l'edge (!)
 
-NdM : j'aime beaucoup la dénomination **head** et **tail**, que je trouve plus courte et moins ambigües que node_from/node_to.
+NdM : j'aime beaucoup la dénomination **head** et **tail**, que je trouve plus courte et moins ambigües que node_from/node_to...
 
-On builde une instance vide de la classe ContractionHierarchy, et ContractionHierarchyExtraInfo [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1103) :
+On builde une instance vide de `ContractionHierarchy`, et `ContractionHierarchyExtraInfo` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1103) :
 
 ```cpp
     ContractionHierarchy ch;
     ContractionHierarchyExtraInfo ch_extra;
 ```
-
-La classe `ContractionHierarchyExtraInfo` semble être simplement une structure qui stocke le mid-node (probablement le node responsable de la création d'un shortcut lorsqu'on le contracte) [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L599).
 
 On cleane un peu les edges en entrée [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1111), et on les trie :
 
@@ -53,23 +68,82 @@ On cleane un peu les edges en entrée [lien](https://github.com/phidra/RoutingKi
 sort_arcs_and_remove_multi_and_loop_arcs(node_count, tail, head, weight, input_arc_id, log_message);
 ```
 
-**QUESTION** : les arcs sont triés par quoi exactement ? (possiblement par {tail, head})
+QUESTION : les arcs sont triés par quoi exactement ? (possiblement par {tail, head})
 
-In fine, toute cette fonction sert surtout à wrapper `build_ch_and_order` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1116).
+In fine, toute cette fonction `ContractionHierarchy::build` sert surtout à wrapper `build_ch_and_order`, qui fait réellement la contraction ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1116)).
 
+### Classe `ContractionHierarchy`
 
-## pré-requis = structure `Graph::Arc`
+Cette classe représente le résultat de la contraction :
+- l'ordre de contraction des nodes (order et rank permettent de retrouver un node à partir de son rank et vice-versa)
+- le graphe upward `G↑` (appelé `forward`) où chaque node ne contient que des out-edges vers des node de rank **supérieur**
+- le graphe downward `G↓` (appelé `downward`) où chaque node ne contient que des out-edges vers des node de rank **inférieur**
+
+Grâce à une instance de cette classe, la classe `ContractionHierarchyQuery` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/contraction_hierarchy.h#L104on)) peut répondre à des requêtes de calcul d'itinéraire.
+
+```cpp
+class ContractionHierarchy{
+
+    // [...]
+    unsigned node_count()const{ return rank.size(); }
+
+    struct Side{
+        std::vector<unsigned>first_out;
+        std::vector<unsigned>head;
+        std::vector<unsigned>weight;
+
+        BitVector is_shortcut_an_original_arc;
+        std::vector<unsigned>shortcut_first_arc; // contains input arc ID if not shortcut
+        std::vector<unsigned>shortcut_second_arc;// contains input tail node ID if not shortcut
+    };
+
+    std::vector<unsigned>rank, order;
+    Side forward, backward;
+};
+```
+
+### Classe `ContractionHierarchyExtraInfo`
+
+La classe `ContractionHierarchyExtraInfo` semble être simplement une structure qui stocke le mid-node (probablement le node responsable de la création d'un shortcut lorsqu'on le contracte) [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L599) :
+
+```cpp
+struct ContractionHierarchyExtraInfo{
+    struct Side{
+        std::vector<unsigned>mid_node;
+        std::vector<unsigned>tail;
+    };
+
+    Side forward, backward;
+};
+```
+
+À confirmer, mais je pense qu'elle est sortie à part de la class `ContractionHierarchy` pour ne pas encombrer cette dernière si on ne s'intéresse qu'au temps de parcours (et pas au chemin effectivement emprunté).
+
+## Structure `Graph::Arc`
 
 C'est une structure interne à `Graph`, qui représente un edge partant d'un node `N` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L180) :
 
+```cpp
+struct Arc{
+	unsigned node;
+	unsigned weight;
+	unsigned hop_length;
+	unsigned mid_node;
+};
+```
+
+Mon interprétation :
+
 - `node` de destination
 - `weight` de l'arc
-- `hop_length` (c'est quoi ? il est initialisé à `1` lorsqu'on créée le graphe → possiblement, c'est le nombre de contractions qu'il représente ?)
-- `mid_node` = sans doute le noeud contracté (initialisé à invalid_id → ça indique que les arcs initiaux sont des arcs "réels", non-issus de la contraction d'un node)
+- `hop_length` : nombre d'edges réels que l'arc représente (`1` si l'edge n'est pas un shortcut, `>1` sinon)
+- `mid_node` = sans doute le noeud contracté (initialisé à `invalid_id` → ça indique que les arcs initiaux sont des arcs "réels", non-issus de la contraction d'un node)
 
-## pré-requis = structure `Graph`
+## Structure `Graph`
 
-C'est la structure représentant le graphe en cours de contraction [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L83) ; en tant que telle, elle évolue constamment au gré de l'avancée de la contraction des nodes.
+C'est la structure représentant le graphe en cours de contraction [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L83).
+
+**POINT IMPORTANT** : cette structure est constamment modifiée au fur et à mesure de la contraction, elle évolue constamment (pour se voir ajouter des shortcuts et supprimer des edgs réels) au gré de l'avancée de la contraction des nodes.
 
 Le graphe est représenté sous-forme d'une liste d'adjacence (ce sont ses seuls attributs), stockant les in-edges et les out-edges [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L226) :
 
@@ -78,7 +152,7 @@ std::vector<std::vector<Arc>>out_, in_;
 std::vector<unsigned>level_;
 ```
 
-De plus, chaque noeud se voit également attribuer un `level` qui n'est pas encore clair (mais qui est iniitalisé à 0 [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L90)).
+De plus, chaque noeud se voit également attribuer un `level` qui n'est pas encore clair (mais qui est initalisé à `0` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L90)).
 
 L'initialisation de `Graph` est assez straightforward = on itère sur chaque edge passé au contructeur, et on remplit les in-edges et out-edges de chaque noeud [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L92) :
 
@@ -96,13 +170,14 @@ for(unsigned a=0; a<head.size(); ++a){
 }
 ```
 
-## pré-requis = `ShorterPathTest`
+## Classe `ShorterPathTest`
 
 C'est une classe (la définition est ici : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L230)) qui sert à calculer des plus courts chemins sur un graphe.
-Son utilisation typique est de chercher les *witness-paths* d'un `contracted-node` en cours de contraction :
-- entre un `in-node` et un `out-node` du node en cours de contraction
-- en bypassant le node en cours de contraction ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L328)), i.e. les PCC calculés ne doivent **PAS** passer par `contracted-node`
-- par rapport à une longueur de référence (= la somme des deux longueurs `in-node > contracted-node` et `contracted-node > out-node`)
+
+Son utilisation typique est de chercher les **witness-paths** d'un chemin `A → X → B`, où `X` est le node en cours de contraction :
+- entre un `in-node` (`A` ci-dessus) et un `out-node` (`B`) du node `X` en cours de contraction
+- en bypassant `X` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L328)), i.e. les PCC calculés ne doivent **PAS** passer par `X`
+- par rapport à une longueur de référence qui est la somme des deux longueurs `A → X` + `B → X`
 
 Son métier principal est donc sa méthode `does_shorter_or_equal_path_to_target_exist` (mais pour des raisons d'implémentation, le `in-node` et le `contracted-node` sont en fait passés à l'initialisation de la structure plutôt qu'à l'appel de cette méthode).
 
@@ -152,8 +227,7 @@ En gros :
 
 Point important : le graphe utilisé pour faire la recherche de PCC (`Graph`) peut (et va !) évoluer entre chaque utilisation. En effet, dans une utilisation typique, on alterne des appels à `ShorterPathTest.does_shorter_or_equal_path_to_target_exist` et à `contract_node`, et cette dernière fonction **modifie** la structure `Graph` sur laquelle travaille `ShorterPathTest`.
 
-
-## pré-requis = hops
+## notion = hops
 
 Ma compréhension est que les **hops** représentent le nombre d'edges "réels" (par opposition aux shortcuts, qui sont des edges "virtuels") :
 
@@ -198,7 +272,7 @@ graph.add_arc_or_reduce_arc_weight(
 );
 ```
 
-## pré-requis = `estimate_node_importance`
+## Fonction `estimate_node_importance`
 
 À dire :
 
@@ -227,7 +301,7 @@ for(unsigned i=0; i<node_count; ++i) {
 }
 ```
 
-## order, rank, et inverse permutation
+## Notions : `order`, `rank`, et inverse permutation
 
 ### TL;DR
 
