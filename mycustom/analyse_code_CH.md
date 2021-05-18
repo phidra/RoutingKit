@@ -58,6 +58,8 @@ In fine, toute cette fonction sert surtout à wrapper `build_ch_and_order` [lien
 
 ## fonction `build_ch_and_order`
 
+**NOTE** : c'est cette fonction qui contient le coeur de l'algo à proprement parler.
+
 Les paramètres d'appels [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L608) :
 
 ```cpp
@@ -71,6 +73,8 @@ void build_ch_and_order(
 ```
 
 Comprendre cette fonction nécessite de s'intéresser à d'autres structures.
+
+FIXME : sortir ces notions préparatoires dans une doc à part.
 
 ## pré-requis = structure `Graph::Arc`
 
