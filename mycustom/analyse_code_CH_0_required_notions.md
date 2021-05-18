@@ -274,6 +274,8 @@ graph.add_arc_or_reduce_arc_weight(
 
 ## Fonction `estimate_node_importance`
 
+FIXME : notes et notions à poursuivre...
+
 À dire :
 
 - fonction essentielle pour l'ordering
