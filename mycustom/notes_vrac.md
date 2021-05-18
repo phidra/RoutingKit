@@ -89,31 +89,13 @@ done | sort -n
 - La parallélisation peut-être parallélisée.
 - On dirait que des customisations partielles (seulement quelques arcs) font l'objet d'une fonction (qui serait plus rapide ?), ça peut être utile : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/CustomizableContractionHierarchy.md#customizablecontractionhierarchypartialcustomization)
 - Il y a toute une section dédiée au travail avec OSM, notamment il y a ce qu'il faut pour extraire facilement des graphes voiture/piéton : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/OpenStreetMap.md)
-- Notion d'inverse permutation ?
-    - j'ai l'impression qu'il s'agit de "retrouver" un objet à partir de sa propriété
-    - par exemple, si chaque node est ranké, je peux stocker :
-        + un vector V1 dont l'index est le node-id, et le contenu est son rank
-        + un vector V2 dont l'index est le rank, et le contenu est le node-id ayant ce rank
-    - d'après ce que je comprends [de cette doc](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/SupportFunctions.md), alors V1 est la permutation inverse de V2 (et vice-versa) :
 
-    ```cpp
+## À creuser un peu plus
 
-    // INDEX=node-id     VALUE=rank :
-    // répond à la question "quel est le rank de ce node ?"
-    vector<unsigned>v = {3,0,2,1};                  // 
+- la fonction `sort_arcs_and_remove_multi_and_loop_arcs` [lien de l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1111) , [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L17)
+- la classe `MinIDQueue` [lien de l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L629), [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/id_queue.h) (c'est une pririty-queue qui stocke des ids (integer), en les classant selon un poids (appelé "key"), lui aussi entier. La fonction `pop` renvoie l'id qui a la plus **petite** key [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/id_queue.h#L78)
+- ce que permet le travail avec les graphes OSM (et notamment, si je peux facilement conserver leur affichage géométrique), [lien vers la description](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/OpenStreetMap.md)
+- l'affichage de graphe, car on dirait qu'il y a de quoi les dessiner au format SVG : [lien vers le binaire](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/graph_to_svg.cpp)  (EDIT : j'ai testé, c'est pas fi-fou... FIXME=pérenniser mes tests et leur conclusion)
+- le stall-on-demand [lien vers la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1536), [lien vers l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1577)
+- la notion de `level` d'un node contracté, [lien à l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L563), [lien de l'initialisation à 0](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L90), [lien de la modification du level des voisins d'un noeud fraîchement contracté](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L713)
 
-    // INDEX=rank     VALUE=node-id :
-    // répond à la question "quel est le node dont le rank est tel-rank ?"
-    vector<unsigned>inv_p = invert_permutation(v);  // INDEX=rank     VALUE=node-id
-    assert(inv_p[0] == 1);
-    assert(inv_p[1] == 3);
-    assert(inv_p[2] == 2);
-    assert(inv_p[3] == 0);
-    ```
-
-    - c'est corroboré par le fait que `rank` et `order` sont `invert_permutation` l'une de l'autre : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L964) :
-
-    ```cpp
-    ch.rank = invert_permutation(new_order);
-    ch.order = std::move(new_order);
-    ```

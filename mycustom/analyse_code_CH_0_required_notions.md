@@ -1,5 +1,7 @@
 # Analyse du code CH
 
+**FIXME** : ces notes sont encore à réorganiser.
+
 ## Contexte
 
 Je m'intéresse à l'ordering/contraction en tirant le fil à partir de [l'exemple donné dans le README](https://github.com/phidra/RoutingKit/blob/a7db9cdabaadb2865fa6dd9b99906b616e679c3b/README.md) :
@@ -55,26 +57,6 @@ sort_arcs_and_remove_multi_and_loop_arcs(node_count, tail, head, weight, input_a
 
 In fine, toute cette fonction sert surtout à wrapper `build_ch_and_order` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1116).
 
-
-## fonction `build_ch_and_order`
-
-**NOTE** : c'est cette fonction qui contient le coeur de l'algo à proprement parler.
-
-Les paramètres d'appels [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L608) :
-
-```cpp
-void build_ch_and_order(
-    Graph& graph,
-    ContractionHierarchy& ch,
-    ContractionHierarchyExtraInfo&ch_extra,
-    unsigned max_pop_count,
-    const std::function<void(std::string)>& log_message
-)
-```
-
-Comprendre cette fonction nécessite de s'intéresser à d'autres structures.
-
-FIXME : sortir ces notions préparatoires dans une doc à part.
 
 ## pré-requis = structure `Graph::Arc`
 
@@ -245,26 +227,36 @@ for(unsigned i=0; i<node_count; ++i) {
 }
 ```
 
+## order, rank, et inverse permutation
 
-### Déroulé de `build_ch_and_order`
+Ce que sont exactement `ch.order` et `ch.rank` (note : la réponse est ici : [lien vers la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L659), le rank d'un node est le moment où il a été ordonné (i.e. un node de rank 0 aura été contracté en premier). L'order d'un rank est l'id du node de ce rank.
 
-On commence par ajouter dans la queue tous les noeuds du graphe, en estimant leur importance [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L632) :
+Notion d'inverse permutation ?
+
+- j'ai l'impression qu'il s'agit de "retrouver" un objet à partir de sa propriété
+- par exemple, si chaque node est ranké, je peux stocker :
+    + un vector V1 dont l'index est le node-id, et le contenu est son rank
+    + un vector V2 dont l'index est le rank, et le contenu est le node-id ayant ce rank
+- d'après ce que je comprends [de cette doc](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/SupportFunctions.md), alors V1 est la permutation inverse de V2 (et vice-versa) :
 
 ```cpp
-for(unsigned i=0; i<node_count; ++i) {
-    queue.push({i, estimate_node_importance(graph, shorter_path_test, i)});
-}
+
+// INDEX=node-id     VALUE=rank :
+// répond à la question "quel est le rank de ce node ?"
+vector<unsigned>v = {3,0,2,1};                  // 
+
+// INDEX=rank     VALUE=node-id :
+// répond à la question "quel est le node dont le rank est tel-rank ?"
+vector<unsigned>inv_p = invert_permutation(v);  // INDEX=rank     VALUE=node-id
+assert(inv_p[0] == 1);
+assert(inv_p[1] == 3);
+assert(inv_p[2] == 2);
+assert(inv_p[3] == 0);
 ```
 
-## À creuser un peu plus
+- c'est corroboré par le fait que `rank` et `order` sont `invert_permutation` l'une de l'autre : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L964) :
 
-- la fonction `sort_arcs_and_remove_multi_and_loop_arcs` [lien de l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1111) , [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L17)
-- la classe `MinIDQueue` [lien de l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L629), [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/id_queue.h) (c'est une pririty-queue qui stocke des ids (integer), en les classant selon un poids (appelé "key"), lui aussi entier. La fonction `pop` renvoie l'id qui a la plus **petite** key [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/id_queue.h#L78)
-- les permutations [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/permutation.h)
-- `hop_length` [lien vers la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L183)
-- `max_pop_count` [lien vers l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1116)
-- ce que sont exactement `ch.order` et `ch.rank` (note : la réponse est ici : [lien vers la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L659), le rank d'un node est le moment où il a été ordonné (i.e. un node de rank 0 aura été contracté en premier). L'order d'un rank est l'id du node de ce rank.
-- ce que permet le travail avec les graphes OSM (et notamment, si je peux facilement conserver leur affichage géométrique), [lien vers la description](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/OpenStreetMap.md)
-- l'afficahge de graphe, car on dirait qu'il y a de quoi les dessiner au format SVG : [lien vers le binaire](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/graph_to_svg.cpp)
-- le stall-on-demand [lien vers la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1536), [lien vers l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1577)
-- la notion de `level` d'un node contracté, [lien à l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L563), [lien de l'initialisation à 0](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L90), [lien de la modification du level des voisins d'un noeud fraîchement contracté](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L713)
+```cpp
+ch.rank = invert_permutation(new_order);
+ch.order = std::move(new_order);
+```
