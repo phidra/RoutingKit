@@ -229,15 +229,68 @@ for(unsigned i=0; i<node_count; ++i) {
 
 ## order, rank, et inverse permutation
 
-Ce que sont exactement `ch.order` et `ch.rank` (note : la réponse est ici : [lien vers la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L659), le rank d'un node est le moment où il a été ordonné (i.e. un node de rank 0 aura été contracté en premier). L'order d'un rank est l'id du node de ce rank.
+### TL;DR
 
-Notion d'inverse permutation ?
+Ce que sont exactement `ch.order` et `ch.rank` :
 
-- j'ai l'impression qu'il s'agit de "retrouver" un objet à partir de sa propriété
-- par exemple, si chaque node est ranké, je peux stocker :
-    + un vector V1 dont l'index est le node-id, et le contenu est son rank
-    + un vector V2 dont l'index est le rank, et le contenu est le node-id ayant ce rank
-- d'après ce que je comprends [de cette doc](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/SupportFunctions.md), alors V1 est la permutation inverse de V2 (et vice-versa) :
+Définition de rank = un node de rank 0 a été contracté en premier.
+
+- `ch.rank` est un vector qui associe un node-id au rank (permet de répondre à la question "quel est le rank de tel node ?")
+- `ch.order` est un vector qui associe un rank à un node-id (permet de répondre à la question "quel est le node qui possède tel rank ?")
+
+`rank` et `order` sont inverse-permutation l'un de l'autre.
+
+
+### rank et order
+
+"Preuve" dans le code de la signification de `ch.rank` et `ch.order` donnés plus haut :
+Concernant `rank` et `order`, l'algo ressemble à ça :
+
+```cpp
+
+ch.rank.resize(node_count);
+ch.order.resize(node_count);
+
+// contracted_node_count est le RANK (le premier noeud à être contracté à un rank=0) :
+unsigned contracted_node_count = 0;
+
+while(!queue.empty()){
+    unsigned node_being_contracted = queue.pop().id;
+
+    // ch.rank -> INDEX=node-id  VALUE=rankk
+    // répond à la question "quel est le rank de tel node-id ?"
+    ch.rank[node_being_contracted] = contracted_node_count;
+
+    // ch.order -> INDEX=rank  VALUE=node-id
+    // répond à la question "quel est le node qui a tel rank ?"
+    ch.order[contracted_node_count] = node_being_contracted;
+
+    // [...]
+
+    contract_node(graph, shorter_path_test, node_being_contracted);
+
+    // [...]
+
+    ++contracted_node_count;
+}
+```
+
+À noter que par la suite, on dirait que le rank est modifié (de façon iso, j'imagine) pour être plus cache friendly, par la fonction `optimize_order_for_cache` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L902)) :
+
+```cpp
+std::vector<unsigned>new_order(node_count);
+// remplit `new_order` petit à petit...
+ch.rank = invert_permutation(new_order);
+ch.order = std::move(new_order);
+```
+
+### Notion d'inverse permutation
+
+J'ai l'impression qu'il s'agit de "retrouver" un objet à partir de sa propriété. Par exemple, si chaque node est ranké, je peux stocker :
+- un vector V1 dont l'index est le node-id, et le contenu est son rank
+- un vector V2 dont l'index est le rank, et le contenu est le node-id ayant ce rank
+
+D'après ce que je comprends [de cette doc](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/SupportFunctions.md), alors V1 est la permutation inverse de V2 (et vice-versa) :
 
 ```cpp
 
@@ -254,7 +307,7 @@ assert(inv_p[2] == 2);
 assert(inv_p[3] == 0);
 ```
 
-- c'est corroboré par le fait que `rank` et `order` sont `invert_permutation` l'une de l'autre : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L964) :
+C'est corroboré par le fait que `rank` et `order` sont `invert_permutation` l'une de l'autre : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L964) :
 
 ```cpp
 ch.rank = invert_permutation(new_order);
