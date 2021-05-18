@@ -92,13 +92,19 @@ done | sort -n
 - Notion d'inverse permutation ?
     - j'ai l'impression qu'il s'agit de "retrouver" un objet à partir de sa propriété
     - par exemple, si chaque node est ranké, je peux stocker :
-        + un vector V1 dont l'index est le node, et le contenu est son rank
-        + un vector V2 dont l'index est le rank, et le contenu est l'id du node ayant ce rank
+        + un vector V1 dont l'index est le node-id, et le contenu est son rank
+        + un vector V2 dont l'index est le rank, et le contenu est le node-id ayant ce rank
     - d'après ce que je comprends [de cette doc](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/SupportFunctions.md), alors V1 est la permutation inverse de V2 (et vice-versa) :
 
     ```cpp
-    vector<unsigned>p = {3,0,2,1};
-    vector<unsigned>inv_p = invert_permutation(p);
+
+    // INDEX=node-id     VALUE=rank :
+    // répond à la question "quel est le rank de ce node ?"
+    vector<unsigned>v = {3,0,2,1};                  // 
+
+    // INDEX=rank     VALUE=node-id :
+    // répond à la question "quel est le node dont le rank est tel-rank ?"
+    vector<unsigned>inv_p = invert_permutation(v);  // INDEX=rank     VALUE=node-id
     assert(inv_p[0] == 1);
     assert(inv_p[1] == 3);
     assert(inv_p[2] == 2);
