@@ -56,8 +56,33 @@ assert(ch.forward.weight[xy] == ch.backward.weight[ch.forward.shortcut_first_arc
 
 Quand on y réfléchit, c'est logique : comme le mid-node d'un shortcut a le rank le plus petit des 3 nodes du shortcut, les deux edges du shortcut sont forcément l'un dans le graphe forward, l'autre dans le graphe backward.
 
-Et même plus précisément : comme le shortcut est `A → X → B`, on a forcément `A < B` (et `X` est le plus petit donc `X < A` et `X < B`), donc on a forcément `X < A < B`.
+Et même plus précisément, si on s'intéresse à un shortcut dans le graphe **forward**, ce shortcut est `A → X → B`, et comme on est sur le graphe forward, on a forcément `A < B`. De plus, comme `X` est le mid-node, il a été contracté avant `A` et `B`, il a donc le plus petit rank des 3, donc `X < A` et `X < B`.
 
-Du coup, `XB` (= deuxième arc du shortcut) sera dans le graphe **forward**, et `AX` (premier arc du shortcut) sera dans le graphe **backward**. Ça cadre avec l'assert ci-dessus :-)
+On a donc forcément `X < A < B`.
+
+Du coup, vus la relation d'ordre sur ces ranks, `AX` (premier arc du shortcut) sera dans le graphe **backward**, et `XB` (= deuxième arc du shortcut) sera dans le graphe **forward**. Ça cadre avec l'assert ci-dessus :-)
 
 
+#### TO DISPATCH 2
+
+Aha, on dirait que dans les "graphes" ch.forward et ch.backward, les nodes sont stockés par leur rank plutôt.
+
+C'est assez logique, vu que c'est ça qui nous intéresse à la base pour savoir si on a le droit de les parcourir ; mais comme ça n'est PAS comme ça que ch.forward (resp. ch.backward) sont construits (en effet, ils sont construits avec les IDs de node, et non leur rank ! ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L689))), ça m'a confusé au début.
+
+Il est probable qu'une fonction qui vient après `build_ch_and_order` post-processe la structure `ch` pour replacer les ids de nodes par leurs ranks. C'est sans doute l'une de ces 3 fonctions :
+
+- `optimize_order_for_cache`
+- `make_internal_nodes_and_rank_coincide`
+- `sort_ch_arcs_and_build_first_out_arrays`
+
+
+#### TO DISPATCH 3
+
+J'ai pu vérifier que dans chaque graphe (forward ou backward) de la CH, on stocke des infos sur les EDGES :
+
+- first_out contient N+1 éléments (où N = nombre de nodes), et référence les **edges** d'un node (cf. structure AdjacencyArray)
+- derrière, TOUTES les autres structures contiennent E éléments (où E = nombre d'edges), un par edge dans le graphe CONTRACTÉ forward ou backward :
+    * `head` est le noeud de destination de l'edge
+    * `weight` est son poids
+    * `is_shortcut_an_original_arc` (que j'appellerai plutôt "is_edge_an_original_arc")  est un booléen indiquant si l'edge dans `ch.forward` est réel (présent dans le graphe original) ou shortcut (issu de la contraction d'un node)
+    * `shortcut_first_arc` (resp. second) contient l'id du premier edge du shortcut (un shortcut est l'agrégat de DEUX edges) -> celui-ci peut-être réel ou virtuel.
