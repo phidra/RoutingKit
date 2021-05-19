@@ -351,7 +351,7 @@ while(!queue.empty()){
 }
 ```
 
-À noter que par la suite, on dirait que le rank est modifié (de façon iso, j'imagine) pour être plus cache friendly, par la fonction `optimize_order_for_cache` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L902)) :
+À noter que par la suite, on dirait que le rank est modifié (de façon iso en terme de calcul d'iti, j'imagine) pour être plus cache friendly, par la fonction `optimize_order_for_cache` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L902)) :
 
 ```cpp
 std::vector<unsigned>new_order(node_count);
