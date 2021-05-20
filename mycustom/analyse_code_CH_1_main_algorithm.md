@@ -109,3 +109,45 @@ Quelques points importants en vrac :
     ```
     * la ligne serait correcte si on était dans `ch.backward` (c'est le cas juste au dessus), donc c'est sans doute une erreur de copié-collé.
     * ce bug reste à confirmer, car je trouve curieux dans ce cas que l'unpacking forward fonctionne correctement, vu que [cette ligne](https://github.com/RoutingKit/RoutingKit/blob/fb5e83bcd4cf85763fb6877a0b5f8d5736c9a15b/src/contraction_hierarchy.cpp#L1728) utilise le code buggé...
+
+#### TO DISPATCH 4
+
+Avec ma compréhension fraîche, je peux expliquer le code d'unpacking, exemple avec `get_arc_path` ([lien](https://github.com/RoutingKit/RoutingKit/blob/fb5e83bcd4cf85763fb6877a0b5f8d5736c9a15b/src/contraction_hierarchy.cpp#L1760)) :
+
+- **STEP 1** = à partir du meeting node, on remonte de proche en proche en arrière (jusqu'à la source du trajet, donc) dans le forward-path, en récupérant à chaque fois le prédécesseur de chaque node :
+
+    ```cpp
+    std::vector<unsigned>up_path;
+    unsigned x = shortest_path_meeting_node;
+    while(forward_predecessor_node[x] != invalid_id){
+        up_path.push_back(forward_predecessor_arc[x]);
+        x = forward_predecessor_node[x];
+    }
+    ```
+- on dispose maintenant du forward-path, sous forme d'une succession d'arcs, dans l'ordre inverse du parcours. Les arcs qui forment ce forward-path sont des **SHORTCUTS**, qu'il faut unpacker.
+- **STEP2** = en les parcourant à l'envers (pour remettre le forward-path dans le bon sens), on unpack chaque arc :
+    ```cpp
+    for(unsigned i=up_path.size(); i>0; --i){
+        unpack_forward_arc(*ch, up_path[i-1], [&](unsigned xy, unsigned y){path.push_back(xy);});
+    }
+    ```
+- la fonction `unpack_forward_arc` est une fonction récursive ([lien](https://github.com/RoutingKit/RoutingKit/blob/fb5e83bcd4cf85763fb6877a0b5f8d5736c9a15b/src/contraction_hierarchy.cpp#L1726)) qui soit appelle `on_new_input_arc` si l'arc est un arc original, soit s'appelle récursivement sur ses deux demi-edges si l'arc est un shortcut :
+    ```cpp
+    if(ch.forward.is_shortcut_an_original_arc.is_set(arc)){
+        on_new_input_arc(ch.forward.shortcut_first_arc[arc], ch.forward.shortcut_second_arc[arc]);
+    } else {
+        unpack_backward_arc(ch, ch.forward.shortcut_first_arc[arc], on_new_input_arc);
+        unpack_forward_arc(ch, ch.forward.shortcut_second_arc[arc], on_new_input_arc);
+    }
+    ```
+- **LE POINT TRÈS IMPORTANT** : on a besoin de traiter différemment le premier et le second demi-edge d'un shortcut (cf. plus haut), d'où le fait qu'on ait deux fonctions :
+    * `unpack_backward_arc` pour unpacker le **premier** demi-edge (et qui va utiliser `ch.backward`), [lien](https://github.com/RoutingKit/RoutingKit/blob/fb5e83bcd4cf85763fb6877a0b5f8d5736c9a15b/src/contraction_hierarchy.cpp#L1726)
+    * `unpack_forward_arc` pour unpacker le **second** demi-edge (et qui va utiliser `ch.forward`), [lien](https://github.com/RoutingKit/RoutingKit/blob/fb5e83bcd4cf85763fb6877a0b5f8d5736c9a15b/src/contraction_hierarchy.cpp#L1738)
+- à noter que `on_new_input_arc` se contente d'ajouter l'arc au chemin (le fait qu'on utilise cette fonction sous forme d'une callback n'est là que pour mutualiser le code avec `get_node_path`)
+- **STEP3** = on fait de même avec le backward-path ([lien](https://github.com/RoutingKit/RoutingKit/blob/fb5e83bcd4cf85763fb6877a0b5f8d5736c9a15b/src/contraction_hierarchy.cpp#L1780))
+- à l'issue de toutes ces étapes, on a reconstitué le path, qui est maintenant constitué d'edges **réels** (manipulés par leurs ids dans le graphe ORIGINAL passé à `ContractionHierarchy::build`)
+
+En résumé :
+- on reconstitue le chemin contracté (à partir des structures qu'a rempli le dijkstra bidirectionnel, notamment `shortest_path_meeting_node`, `forward_predecessor_node`, `forward_predecessor_arc`, etc.)
+- on expande chaque edge-contracté, en expandant récursivement ses deux demi-edges
+- pour expand chaque demi-edge, on utilise `ch.backward` pour le premier, et `ch.forward` pour le second
