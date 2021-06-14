@@ -88,8 +88,8 @@ Laissé en exercice au lecteur ;-)
 - dans le graphe de contraction, il existera (de façon transitoire) le shortcut `AB` (qui sera dans le mauvais sens si `A > B`, et ce n'est pas grave)
 
 Une conséquence à comprendre :
-- si on trouve un shortcut `AB` dans le graphe `ch.forward`, alors on avait forcément `X < A < B`  (et le sens de parcours était `A → X → B`), `XB` est dans `ch.forward` et `AX` (ou plutôt `XA`) dans le graphe `ch.backward`.
-- si on trouve un shortcut `EF` dans le graphe `ch.backward`, alors on avait forcément `X < E < F` (et le sens de parcours était `F → X → E`), `XE` est dans `ch.forward` et `FX` (ou plutôt `XF`) dans le graphe `ch.backward`.
+- si on trouve un shortcut `AB` dans le graphe `ch.forward`, alors on avait forcément `X < A < B`  (et le sens de parcours était `A → X → B`), le premier demi-edge `AX` (ou plutôt `XA`) dans le graphe `ch.backward`, et le second demi-edge `XB` est dans `ch.forward`.
+- si on trouve un shortcut `EF` dans le graphe `ch.backward`, alors on avait forcément `X < E < F` (et le sens de parcours était `F → X → E`), le premier demi-edge `FX` (ou plutôt `XF`) dans le graphe `ch.backward`, et le second demi-edge `XE` est dans `ch.forward`.
 - dans tous les cas, les deux demi-edges sont dans des graphes **Side** différents !
 
 ### NOTES VRAC À DISPATCHER
@@ -98,19 +98,13 @@ Une conséquence à comprendre :
 
 La fonction `build_unpacking_information` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L973)), et le fait qu'on utilise `ContractionHierarchyExtraInfo` pour avoir le mid-node (sans quoi on dirait qu'on n'y a pas accès) ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1002)).
 
-Le fonctionnement des shortcut_first_arc et shortcut_second_arc. [Cette ligne](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1014) donne des indication ssur comment l'utiliser :
+Le fonctionnement des `shortcut_first_arc` et `shortcut_second_arc`. [Cette ligne](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1014) donne des indication sur comment l'utiliser :
 
 ```cpp
 assert(ch.forward.weight[xy] == ch.backward.weight[ch.forward.shortcut_first_arc[xy]] + ch.forward.weight[ch.forward.shortcut_second_arc[xy]]);
 ```
 
-Quand on y réfléchit, c'est logique : comme le mid-node d'un shortcut a le rank le plus petit des 3 nodes du shortcut, les deux edges du shortcut sont forcément l'un dans le graphe forward, l'autre dans le graphe backward.
-
-Et même plus précisément, si on s'intéresse à un shortcut dans le graphe **forward**, ce shortcut est `A → X → B`, et comme on est sur le graphe forward, on a forcément `A < B`. De plus, comme `X` est le mid-node, il a été contracté avant `A` et `B`, il a donc le plus petit rank des 3, donc `X < A` et `X < B`.
-
-On a donc forcément `X < A < B`.
-
-Du coup, vus la relation d'ordre sur ces ranks, `AX` (premier arc du shortcut) sera dans le graphe **backward**, et `XB` (= deuxième arc du shortcut) sera dans le graphe **forward**. Ça cadre avec l'assert ci-dessus :-)
+On s'intéresse au shortcut `xy` dans le graphe `ch.forward`. Son premier demi-edge est dans le graphe `ch.backward`, et son second demi-edge est dans le graphe `ch.forward`, c'est cohérent avec ce qui est décrit plus haut.
 
 
 #### TO DISPATCH 2
