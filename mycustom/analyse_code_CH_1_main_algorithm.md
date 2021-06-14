@@ -42,6 +42,48 @@ for(unsigned i=0; i<node_count; ++i) {
 }
 ```
 
+
+### Rank des différents nodes lors de la contraction d'un node `X`
+
+On s'intéresse aux nodes `A → X → B` lors de la contraction du node `X`.
+
+**ATTENTION** : ne pas confondre :
+- **le sens de parcours** de l'edge (dans notre exemple, partant de `A`, on ne peut aller que VERS `X`, puis VERS `B`) 
+- **l'ordre relatif** de `A`, `X` et `B` ; comme on contracte `X` avant `A` et `B`, `X` aura toujours le plus petit rank, mais on peut sans soucis avoir indifféremment `A > B` ou `B > A`, peu importe le sens de parcours.
+
+#### Préambule = où trouve-t-on des shortcuts ?
+
+Un shortcut (i.e. un edge entre deux noeuds, inexistant dans le graphe original) n'existe QUE dans ces deux contextes :
+- soit dans un graphe **Side** (`ch.forward` ou `ch.backward`), graphes pérennes sur lesquels on calcule la propagation
+- soit dans le graphe de contraction, appelé **Graph** dans le code, graphe transitoire qui ne sert PAS à la contraction
+
+Dans le graphe de contraction, on aura temporairement un shortcut `A → B` : il est ajouté juste après la contraction de `X`, et sera supprimé au moment de la contraction de `A` ou de `B`.
+
+Dans ce graphe de contraction, même si `A > B`, juste après la contraction de `X`, on aura (temporairement, donc) un shortcut de `A` vers `B`, donc dans le "mauvais" sens, i.e. le sens "descendant les ranks". Ça n'est PAS grave : ce n'est pas sur ce graphe de contraction que la propagation va être faite, mais sur les graphe **Side** ! Or, c'est à la propagation qu'on ne doit aller que vers des nodes de rank supérieur : le graphe de contraction "a le droit" d'avoir des shortcuts dans le mauvais sens.
+
+#### Cas 1 = A < B
+
+
+
+**TL;DR** :
+
+- comme c'est lui qu'on contracte avant `A` et `B`, le mid-node `X` a le rank le plus petit
+- concernant `A` et `B`, les deux cas suivants sont tout à fait possibles `A < B` et `B < A`
+- peu importe lequel des deux cas, les graphes **Side** (`ch.forward` et `ch.backward`) n'auront JAMAIS de shortcut dans le mauvais sens
+- peu importe lequel des deux cas, les demi-edges entre A↔X et X↔B seront forcément dans des graphes **Side** (`ch.forward` et `ch.backward`) différents
+- si on trouve un shortcut `AB` dans le graphe **forward**, alors on a forcément `A < B` et les demi-edges sont `XA` (dans **ch.backward**) et `XB` (dans **ch.forward**)
+- si on trouve un shortcut `BA` dans le graphe **backward**, alors on a forcément `B < A`, et avec cette notation, les demi-edges sont les mêmes : `XA` (dans **ch.backward**) et `XB` (dans **ch.forward**)
+
+
+Comme le mid-node d'un shortcut a le rank le plus petit des 3 nodes du shortcut, les deux edges `A → X` et `X → B` sont forcément l'un dans le graphe forward, l'autre dans le graphe backward.
+
+Et même plus précisément, si on s'intéresse à un shortcut dans le graphe **forward**, ce shortcut est `A → X → B`, et comme on est sur le graphe forward, on a forcément `A < B`. De plus, comme `X` est le mid-node, il a été contracté avant `A` et `B`, il a donc le plus petit rank des 3, donc `X < A` et `X < B`.
+
+On a donc forcément `X < A < B`.
+
+Du coup, vus la relation d'ordre sur ces ranks, `AX` (premier arc du shortcut) sera dans le graphe **backward**, et `XB` (= deuxième arc du shortcut) sera dans le graphe **forward**. Ça cadre avec l'assert ci-dessus :-)
+
+
 ### NOTES VRAC À DISPATCHER
 
 #### TO DISPATCH 1
