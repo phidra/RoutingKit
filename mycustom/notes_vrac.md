@@ -4,11 +4,11 @@
 
 - l'analyse du code CH est décrite dans [ce fichier](./analyse_code_CH.md).
 - la construction de graphe à partir d'un fichier OSM (`file.pbf`) est décrite dans [ce fichier](./pbf_reading.md)
-- le fait dedessiner un graphe, i.e. construire une image (PNG, SVG, ...) à partir d'un graphe est décrite dans [ce fichier](./graph_drawing.md).
+- le fait de dessiner un graphe, i.e. construire une image (PNG, SVG, ...) à partir d'un graphe est décrite dans [ce fichier](./graph_drawing.md).
 
 ## Fichiers intéressants
 
-Je constate que la plupart des fichiers de RoutingKit/src sont des binaires ! Les seuls fichiers qui sont "utilitaires" sont :
+Je constate que la plupart des fichiers de RoutingKit/src sont des binaires. Les seuls fichiers qui sont "utilitaires" sont :
 
 ```sh
 grep -L "int main" RoutingKit/src/*.cpp
@@ -86,16 +86,15 @@ done | sort -n
     - le chemin sous forme d'une liste de nodes
     - le chemin sous forme d'une liste d'arcs
 - On dirait que la license du code permet de réutiliser le code : [lien vers la LICENSE](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/LICENSE)
-- La parallélisation peut-être parallélisée.
+- La contraction peut-être parallélisée.
 - On dirait que des customisations partielles (seulement quelques arcs) font l'objet d'une fonction (qui serait plus rapide ?), ça peut être utile : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/CustomizableContractionHierarchy.md#customizablecontractionhierarchypartialcustomization)
 - Il y a toute une section dédiée au travail avec OSM, notamment il y a ce qu'il faut pour extraire facilement des graphes voiture/piéton : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/OpenStreetMap.md)
 
 ## À creuser un peu plus
 
 - la fonction `sort_arcs_and_remove_multi_and_loop_arcs` [lien de l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1111) , [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L17)
-- la classe `MinIDQueue` [lien de l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L629), [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/id_queue.h) (c'est une pririty-queue qui stocke des ids (integer), en les classant selon un poids (appelé "key"), lui aussi entier. La fonction `pop` renvoie l'id qui a la plus **petite** key [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/id_queue.h#L78)
+- la classe `MinIDQueue` [lien de l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L629), [lien de la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/id_queue.h) (c'est une priority-queue qui stocke des ids (integer), en les classant selon un poids (appelé "key"), lui aussi entier. La fonction `pop` renvoie l'id qui a la plus **petite** key [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/id_queue.h#L78)
 - ce que permet le travail avec les graphes OSM (et notamment, si je peux facilement conserver leur affichage géométrique), [lien vers la description](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/doc/OpenStreetMap.md)
-- l'affichage de graphe, car on dirait qu'il y a de quoi les dessiner au format SVG : [lien vers le binaire](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/graph_to_svg.cpp)  (EDIT : j'ai testé, c'est pas fi-fou... FIXME=pérenniser mes tests et leur conclusion)
 - le stall-on-demand [lien vers la définition](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1536), [lien vers l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1577)
 - la notion de `level` d'un node contracté, [lien à l'utilisation](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L563), [lien de l'initialisation à 0](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L90), [lien de la modification du level des voisins d'un noeud fraîchement contracté](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L713)
 - quel est l'intérêt de chercher à minimiser le hop-ratio ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L563)) ? (élément de réponse : ça cherche à minimiser la taille (en nombre de nodes et d'edges) du graphe "expanded", où on remplacerait chaque edge contracté par les edges réels dont il est constitué)
