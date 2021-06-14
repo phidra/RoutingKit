@@ -128,7 +128,7 @@ J'ai pu vérifier que dans chaque graphe (forward ou backward) de la CH, on stoc
     * `head` est le noeud de destination de l'edge
     * `weight` est son poids
     * `is_shortcut_an_original_arc` (que j'appellerai plutôt "is_edge_an_original_arc")  est un booléen indiquant si l'edge dans `ch.forward` est réel (présent dans le graphe original) ou shortcut (issu de la contraction d'un node)
-    * `shortcut_first_arc` (resp. `second`) contient l'id du premier edge du shortcut (un shortcut est l'agrégat de DEUX edges) -> celui-ci peut-être réel ou virtuel.
+    * `shortcut_first_arc` (resp. `shortcut_second_arc`) contient l'id du premier edge du shortcut (un shortcut est l'agrégat de DEUX edges) -> celui-ci peut-être réel ou virtuel.
 
 Quelques points importants en vrac :
 - tous les edges du graphe original ne sont pas dans `ch.forward` et `ch.backward` ! Seuls ceux qui contribuent à un plus court-chemin (ou plus exactement, dont on n'a pas pu prouver qu'ils n'y contribuaient pas en trouvant un witness-path) seront dans `ch.forward` et `ch.backward`.
