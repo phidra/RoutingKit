@@ -79,7 +79,7 @@ Cette classe représente le résultat de la contraction :
 - le graphe upward `G↑` (appelé `forward`) où chaque node ne contient que des out-edges vers des node de rank **supérieur**
 - le graphe downward `G↓` (appelé `downward`) où chaque node ne contient que des out-edges vers des node de rank **inférieur**
 
-Grâce à une instance de cette classe, la classe `ContractionHierarchyQuery` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/contraction_hierarchy.h#L104on)) peut répondre à des requêtes de calcul d'itinéraire.
+Grâce à une instance de cette classe, la classe `ContractionHierarchyQuery` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/contraction_hierarchy.h#L104on)) peut répondre à des requêtes de calcul d'itinéraire. EDIT : en première approche, un simple dijkstra bidirectionnel suffit pour utiliser cette structure → c'est ce que j'ai fait en python dans glifov.
 
 ```cpp
 class ContractionHierarchy{
@@ -302,6 +302,21 @@ for(unsigned i=0; i<node_count; ++i) {
     queue.push({i, estimate_node_importance(graph, shorter_path_test, i)});
 }
 ```
+
+APPEL 2 = après la contraction d'un node, appelée sur chaque voisin du node contracté : https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L714
+
+```cpp
+for(auto x:neighbor_list){
+    // [...]
+    unsigned new_key = estimate_node_importance(graph, shorter_path_test, x);
+    unsigned old_key = queue.get_key(x);
+    if(old_key < new_key)
+        queue.increase_key({x, new_key});
+    else if(old_key > new_key)
+        queue.decrease_key({x, new_key});
+}
+```
+
 
 ## Notions : `order`, `rank`, et inverse permutation
 
