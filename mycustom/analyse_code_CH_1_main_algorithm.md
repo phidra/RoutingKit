@@ -168,7 +168,7 @@ Avec ma compréhension toute fraîche, je peux expliquer le code d'unpacking, ex
         x = forward_predecessor_node[x];
     }
     ```
-- on dispose maintenant du forward-path **contracté**, sous forme d'une succession de nodes (`vector<unsigned>`), dans l'ordre inverse du parcours. Les arcs qui forment ce forward-path sont des **SHORTCUTS**, qu'il faut unpacker.
+- à l'issue de cette STEP 1, on dispose du forward-path **contracté**, sous forme d'une succession de nodes (`vector<unsigned>`), dans l'ordre inverse du parcours. Les arcs qui forment ce forward-path sont des **SHORTCUTS**, qu'il faut unpacker.
 - **STEP2** = en les parcourant à l'envers (pour remettre le forward-path dans le bon sens), on unpack chaque arc :
     ```cpp
     for(unsigned i=up_path.size(); i>0; --i){
