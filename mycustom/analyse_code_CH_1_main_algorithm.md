@@ -146,7 +146,7 @@ ch.backward.shortcut_second_arc[xy] = tail[a];
 
 Ce sont les structures `shortcut_first_arc` et `shortcut_second_arc` qui permettent d'unpack un shortcut, jusqu'à remonter récursivement aux demi-edges originaux.
 
-En pratique, c'est la fonction `build_unpacking_information` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L973)) qui construit ces structures, en utilisant `ContractionHierarchyExtraInfo` pour avoir le mid-node (sans quoi on dirait qu'on n'y a pas accès) ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1002)).
+En pratique, c'est la fonction `build_unpacking_information` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L973)) qui construit ces structures, en utilisant `ContractionHierarchyExtraInfo` pour avoir connaissance du mid-node (sans quoi on dirait qu'on n'y a pas accès dans les structures de `ContractionHierarchy`) ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1002)).
 
 [Cette ligne](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1014) me donne confirmation de ma compréhension des choses jusqu'ici :
 
