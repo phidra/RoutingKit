@@ -274,28 +274,22 @@ graph.add_arc_or_reduce_arc_weight(
 
 ## Fonction `estimate_node_importance`
 
-FIXME : notes et notions à poursuivre...
+C'est cette fonction qui est **l'épine dorsale de l'ordering** ! En gros, elle donne un score, et plus ce score sera bas, plus le node sera contracté tôt.
 
-À dire :
+Sachant que calculer l'ordering qui minimise le nombre de shortcuts est NP-complet, `estimate_node_importance` implémente une heuristique approximant un bon ordering, en sommant 3 facteurs de même poids :
 
-- fonction essentielle pour l'ordering
-- sans doute l'une des fonctions responsable du plus de temps passé dans la contraction (ça sera intéressant de le vérifier, justement)
-- appelée initialement pour initialiser les nodes
-- appelée également après la contraction d'un node sur chacun de ses voisins, pour réévaluer lesdits voisins, suite à la contruction du node
-- en gros, elle donne un score, et plus ce score sera bas, plus le node sera contracté rapidement
-- le score est la somme de 3 facteurs qui ont le même poids
-- facteur 1 = ratio entre le nombre de shortcuts ajoutés si on contracte le node et le nobmre d'edge supprimés par la contraction du node
+- facteur 1 = ratio entre le nombre de shortcuts ajoutés si on contracte le node et le nombre d'edge supprimés par la contraction du node
 - facteur 2 = ratio entre le nombre de hops ajoutés si on contracte le node et le nombre de hops supprimés par la contraction du node
 - facteur 3 = le `level` du node en cours de contraction (pas encore très clair)
 
-Ce qu'elle fait en gros :
 
-DEFINITION
-https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L527
+Sa définition : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L527) :
+
+```cpp
 unsigned estimate_node_importance(const Graph&graph, ShorterPathTest&shorter_path_test, unsigned node)
+```
 
-APPEL 1 = à l'initialisation du graphe
-https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L633
+Appelée une première fois avant la contraction, pour donner un premier ordre des nodes [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L633) :
 
 ```cpp
 for(unsigned i=0; i<node_count; ++i) {
@@ -303,7 +297,7 @@ for(unsigned i=0; i<node_count; ++i) {
 }
 ```
 
-APPEL 2 = après la contraction d'un node, appelée sur chaque voisin du node contracté : https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L714
+Appelée par la suite après chaque contraction d'un node, sur chacun de ses voisins, pour réévaluer l'ordering desdits voisins, suite à la contraction du node [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L714) :
 
 ```cpp
 for(auto x:neighbor_list){
@@ -317,6 +311,7 @@ for(auto x:neighbor_list){
 }
 ```
 
+Il est probable que c'est la fonction la plus consommatrice de temps de contraction (ça sera intéressant de le vérifier, justement). 
 
 ## Notions : `order`, `rank`, et inverse permutation
 
