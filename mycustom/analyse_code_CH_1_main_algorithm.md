@@ -104,20 +104,6 @@ Il est probable qu'une fonction qui vient après `build_ch_and_order` post-proce
 - `make_internal_nodes_and_rank_coincide` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L833)
 - `sort_ch_arcs_and_build_first_out_arrays` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L864)
 
-### NOTES VRAC À DISPATCHER
-
-#### TO DISPATCH 1
-
-La fonction `build_unpacking_information` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L973)), et le fait qu'on utilise `ContractionHierarchyExtraInfo` pour avoir le mid-node (sans quoi on dirait qu'on n'y a pas accès) ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1002)).
-
-Le fonctionnement des `shortcut_first_arc` et `shortcut_second_arc`. [Cette ligne](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1014) donne des indication sur comment l'utiliser :
-
-```cpp
-assert(ch.forward.weight[xy] == ch.backward.weight[ch.forward.shortcut_first_arc[xy]] + ch.forward.weight[ch.forward.shortcut_second_arc[xy]]);
-```
-
-On s'intéresse au shortcut `xy` dans le graphe `ch.forward`. Son premier demi-edge est dans le graphe `ch.backward`, et son second demi-edge est dans le graphe `ch.forward`, c'est cohérent avec ce qui est décrit plus haut.
-
 ### Les structures de ch.forward / ch.backward
 
 J'ai pu vérifier que dans chaque graphe (`ch.forward` ou `ch.backward`) de la CH, on stocke des infos **sur les edges** :
@@ -155,6 +141,20 @@ ch.backward.shortcut_second_arc[xy] = tail[a];
 ```
 - la ligne serait correcte si on était dans `ch.backward` (c'est le cas juste au dessus), donc c'est sans doute une erreur de copié-collé.
 - ce bug reste à confirmer, car je trouve curieux dans ce cas que l'unpacking forward fonctionne correctement, vu que [cette ligne](https://github.com/RoutingKit/RoutingKit/blob/fb5e83bcd4cf85763fb6877a0b5f8d5736c9a15b/src/contraction_hierarchy.cpp#L1728) utilise le code buggé...
+
+### Construction de shortcut_first_arc / shortcut_second_arc
+
+Ce sont les structures `shortcut_first_arc` et `shortcut_second_arc` qui permettent d'unpack un shortcut, jusqu'à remonter récursivement aux demi-edges originaux.
+
+En pratique, c'est la fonction `build_unpacking_information` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L973)) qui construit ces structures, en utilisant `ContractionHierarchyExtraInfo` pour avoir le mid-node (sans quoi on dirait qu'on n'y a pas accès) ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1002)).
+
+[Cette ligne](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L1014) me donne confirmation de ma compréhension des choses jusqu'ici :
+
+```cpp
+assert(ch.forward.weight[xy] == ch.backward.weight[ch.forward.shortcut_first_arc[xy]] + ch.forward.weight[ch.forward.shortcut_second_arc[xy]]);
+```
+
+Interprétation : on s'intéresse au shortcut `xy` dans le graphe `ch.forward`. Son premier demi-edge est dans le graphe `ch.backward`, et son second demi-edge est dans le graphe `ch.forward`, c'est cohérent avec ce qui est décrit plus haut.
 
 #### TO DISPATCH 4
 
