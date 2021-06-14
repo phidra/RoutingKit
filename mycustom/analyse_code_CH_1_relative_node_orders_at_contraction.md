@@ -1,3 +1,9 @@
+* [Rank des différents nodes lors de la contraction d'un node X](#rank-des-différents-nodes-lors-de-la-contraction-dun-node-x)
+   * [Préambule = où la notion de "shortcut" a-t-elle du sens ?](#préambule--où-la-notion-de-shortcut-a-t-elle-du-sens-)
+   * [Cas 1 = A &gt; B](#cas-1--a--b)
+   * [Cas 2 = B &gt; A](#cas-2--b--a)
+   * [En résumé :](#en-résumé-)
+
 # Rank des différents nodes lors de la contraction d'un node `X`
 
 On s'intéresse aux nodes `A → X → B` lors de la contraction du node `X`.

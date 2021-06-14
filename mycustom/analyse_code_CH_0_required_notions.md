@@ -1,3 +1,18 @@
+* [Analyse du code CH — pré-requis](#analyse-du-code-ch--pré-requis)
+   * [Contexte et grosses mailles](#contexte-et-grosses-mailles)
+      * [Du point de départ à l'appel de build_ch_and_order](#du-point-de-départ-à-lappel-de-build_ch_and_order)
+      * [Classe ContractionHierarchy](#classe-contractionhierarchy)
+      * [Classe ContractionHierarchyExtraInfo](#classe-contractionhierarchyextrainfo)
+   * [Structure Graph::Arc](#structure-grapharc)
+   * [Structure Graph](#structure-graph)
+   * [Classe ShorterPathTest](#classe-shorterpathtest)
+   * [notion = hops](#notion--hops)
+   * [Fonction estimate_node_importance](#fonction-estimate_node_importance)
+   * [Notions : order, rank, et inverse permutation](#notions--order-rank-et-inverse-permutation)
+      * [TL;DR](#tldr)
+      * [rank et order](#rank-et-order)
+      * [Notion d'inverse permutation](#notion-dinverse-permutation)
+
 # Analyse du code CH — pré-requis
 
 Ces notes correspondent aux investigations sur les structures utilisées par le code de contraction.

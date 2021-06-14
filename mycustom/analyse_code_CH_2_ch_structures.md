@@ -1,3 +1,10 @@
+* [Les structures de CH](#les-structures-de-ch)
+   * [Préambule = identification des nodes dans les graphes ch.forward et ch.backward](#préambule--identification-des-nodes-dans-les-graphes-chforward-et-chbackward)
+   * [Les structures de ch.forward / ch.backward](#les-structures-de-chforward--chbackward)
+      * [Bug probable](#bug-probable)
+   * [Construction de shortcut_first_arc / shortcut_second_arc](#construction-de-shortcut_first_arc--shortcut_second_arc)
+   * [Comment unpacker un shortcut ?](#comment-unpacker-un-shortcut-)
+
 # Les structures de CH
 
 **NOTE** : cette page s'intéresse à ce que représentent les structures de la classe `ContractionHierarchy` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/include/routingkit/contraction_hierarchy.h#L53)) :
