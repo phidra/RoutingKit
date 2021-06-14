@@ -57,7 +57,7 @@ Un shortcut (i.e. un edge entre deux noeuds, inexistant dans le graphe original)
 - soit dans un graphe **Side** (`ch.forward` ou `ch.backward`), graphes pérennes sur lesquels s'effectuera plus tard la propagation
 - soit dans **le graphe de contraction**, appelé `Graph` dans le code, graphe transitoire qui ne sert PAS à la propagation
 
-Dans le graphe de contraction, on aura temporairement un shortcut `A → B` : il est ajouté juste après la contraction de `X`, et sera supprimé au moment de la contraction de `A` ou de `B`.
+Dans le graphe de contraction, il existera temporairement un shortcut `A → B` : celui-ci est ajouté juste après la contraction de `X`, et sera supprimé au moment de la contraction de `A` ou de `B`.
 
 Dans ce graphe de contraction, même si `A > B`, juste après la contraction de `X`, on aura (temporairement, donc) un shortcut de `A` vers `B`, donc dans le "mauvais" sens, i.e. le sens "descendant les ranks". Ça n'est PAS grave : ce n'est pas sur ce graphe de contraction que la propagation va être faite, mais sur les graphe **Side** ! Or, c'est à la propagation qu'on ne doit aller que vers des nodes de rank supérieur : le graphe de contraction "a le droit" d'avoir des shortcuts dans le mauvais sens.
 
