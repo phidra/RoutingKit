@@ -54,7 +54,7 @@ On s'intéresse aux nodes `A → X → B` lors de la contraction du node `X`.
 #### Préambule = où trouve-t-on des shortcuts ?
 
 Un shortcut (i.e. un edge entre deux noeuds, inexistant dans le graphe original) n'existe QUE dans ces deux contextes :
-- soit dans un graphe **Side** (`ch.forward` ou `ch.backward`), graphes pérennes sur lesquels on calcule la propagation
+- soit dans un graphe **Side** (`ch.forward` ou `ch.backward`), graphes pérennes sur lesquels s'effectuera plus tard la propagation
 - soit dans le graphe de contraction, appelé **Graph** dans le code, graphe transitoire qui ne sert PAS à la contraction
 
 Dans le graphe de contraction, on aura temporairement un shortcut `A → B` : il est ajouté juste après la contraction de `X`, et sera supprimé au moment de la contraction de `A` ou de `B`.
