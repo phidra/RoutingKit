@@ -49,7 +49,7 @@ On s'intéresse aux nodes `A → X → B` lors de la contraction du node `X`.
 
 **ATTENTION** : ne pas confondre :
 - **le sens de parcours** de l'edge (dans notre exemple, partant de `A`, on ne peut aller que VERS `X`, puis VERS `B`) 
-- **l'ordre relatif** de `A`, `X` et `B` ; comme on contracte `X` avant `A` et `B`, `X` aura toujours le plus petit rank, mais on peut sans soucis avoir indifféremment `A > B` ou `B > A`, peu importe le sens de parcours.
+- **l'ordre relatif** de `A`, `X` et `B` ; dans notre exemple, on pourra avoir indifféremment `A > B` ou `B > A`, sans lien avec le sens de parcours (par contre, comme on contracte `X` en premier, il aura **toujours** un rank plus petit que `A` et `B`).
 
 #### Préambule = où trouve-t-on des shortcuts ?
 
