@@ -96,7 +96,7 @@ Une conséquence à comprendre :
 
 **Point important** : dans les graphes `ch.forward` et `ch.backward`, les nodes sont stockés par leur *rank* (plutôt que par leur *order*).
 
-C'est assez logique, vu que c'est ça qui nous intéresse à la base pour savoir si on a le droit de les parcourir ; mais comme ça n'est PAS comme ça que ch.forward (resp. ch.backward) sont construits (en effet, ils sont construits avec les IDs de node, et non leur rank ! ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L689))), ça m'a confusé au début.
+C'est assez logique, vu que c'est ça qui nous intéresse à la base pour savoir si on a le droit de les parcourir ; mais comme ça n'est PAS comme ça que `ch.forward` (resp. `ch.backward`) sont construits (en effet, ils sont construits avec les IDs de node, et non leur rank ! ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L689))), ça m'a confusé au début.
 
 Il est probable qu'une fonction qui vient après `build_ch_and_order` post-processe la structure `ch` pour replacer les ids de nodes par leurs ranks. C'est sans doute l'une de ces 3 fonctions :
 
@@ -128,7 +128,7 @@ J'ai pu vérifier que dans chaque graphe (forward ou backward) de la CH, on stoc
     * `head` est le noeud de destination de l'edge
     * `weight` est son poids
     * `is_shortcut_an_original_arc` (que j'appellerai plutôt "is_edge_an_original_arc")  est un booléen indiquant si l'edge dans `ch.forward` est réel (présent dans le graphe original) ou shortcut (issu de la contraction d'un node)
-    * `shortcut_first_arc` (resp. second) contient l'id du premier edge du shortcut (un shortcut est l'agrégat de DEUX edges) -> celui-ci peut-être réel ou virtuel.
+    * `shortcut_first_arc` (resp. `second`) contient l'id du premier edge du shortcut (un shortcut est l'agrégat de DEUX edges) -> celui-ci peut-être réel ou virtuel.
 
 Quelques points importants en vrac :
 - tous les edges du graphe original ne sont pas dans `ch.forward` et `ch.backward` ! Seuls ceux qui contribuent à un plus court-chemin (ou plus exactement, dont on n'a pas pu prouver qu'ils n'y contribuaient pas en trouvant un witness-path) seront dans `ch.forward` et `ch.backward`.
