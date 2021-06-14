@@ -48,7 +48,7 @@ for(unsigned i=0; i<node_count; ++i) {
 On s'intéresse aux nodes `A → X → B` lors de la contraction du node `X`.
 
 **ATTENTION** : ne pas confondre :
-- **le sens de parcours** de l'edge (dans notre exemple, partant de `A`, on ne peut aller que VERS `X`, puis VERS `B`) 
+- **le sens de parcours** de l'edge. Dans notre exemple, partant de `A`, on ne peut aller que VERS `X`, puis VERS `B` (dans la vraie vie, il n'existe pas de route reliant `B` à `X`).
 - **l'ordre relatif** de `A`, `X` et `B` ; dans notre exemple, on pourra avoir indifféremment `A > B` ou `B > A`, sans lien avec le sens de parcours (par contre, comme on contracte `X` en premier, il aura **toujours** un rank plus petit que `A` et `B`).
 
 #### Préambule = où trouve-t-on des shortcuts ?
