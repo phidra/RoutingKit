@@ -66,8 +66,6 @@ Et on va montrer que dans les deux cas (`A < B` ou `A > B`), dans les graphe **S
 
 #### Cas 1 = A > B
 
-**TODO** : on va montrer qu'il il n'existera aura AUCUN out-edge de A vers B. En effet, l'enchaînement est :
-
 - juste avant de contracter `X`, on ajoute l'out-edge `XB` à `ch.forward` (qui respecte l'ordering des nodes, puisque `X < B`)
 - de même, juste avant de contracter `X`, on ajoute l'in-edge `AX` à `ch.backward` (dans ce graphe, il devient donc `XA`, ce qui respecte l'ordering des nodes, puisque `X < A`)
 - **conclusion** : si `A > B`, les edges de `X` ajoutés à `ch.forward` et `ch.backward` sont dans le bon sens = toujours vers le node de rank supérieur.
