@@ -129,12 +129,12 @@ J'ai pu vérifier que dans chaque graphe (`ch.forward` ou `ch.backward`) de la C
     * `is_shortcut_an_original_arc` (que j'aurais plutôt appelé _is_edge_an_original_arc_)  est un booléen indiquant si l'edge dans `ch.forward` est réel (présent dans le graphe original) ou shortcut (généré par la contraction d'un node)
     * `shortcut_first_arc` (resp. `shortcut_second_arc`) contient l'id du premier demi-edge du shortcut (un shortcut est l'agrégat de DEUX edges) -> celui-ci peut-être réel ou virtuel.
 
-Quelques points importants en vrac :
-- tous les edges du graphe original ne sont pas dans `ch.forward` et `ch.backward` ! Seuls ceux qui contribuent à un plus court-chemin (ou plus exactement, dont on n'a pas pu prouver qu'ils n'y contribuaient pas en trouvant un witness-path) seront dans `ch.forward` et `ch.backward`.
-- `shortcut_first_arc` et `shortcut_second_arc` renvoient l'id du demi-edge du shortcut, mais cet id **n'est pas à utiliser de la même façon** selon qu'on parle du premier ou deuxième demi-edge. Si on parle d'un shortcut de `ch.forward` :
-    * on a vu plus haut que le middle-node `X` avait le rank le plus bas : `X < A < B`
-    * le **SECOND** demi-edge `XB` est donc un edge **FORWARD** (et l'index renvoyé par `shortcut_second_arc` est donc un index dans `ch.forward.head` / `ch.forward.weight` / ...)
-    * de même, le **PREMIER** demi-edge est un edge **BACKWARD** (et l'index renvoyé par `shortcut_first_arc` est donc un index dans `ch.backward.head` / `ch.backward.weight` / ...)
+Important : tous les edges du graphe original ne sont pas présents dans `ch.forward` et `ch.backward` ! Seuls ceux qui contribuent à un plus court-chemin (ou plus exactement, dont on n'a pas pu prouver qu'ils n'y contribuaient pas en trouvant un witness-path) seront dans `ch.forward` et `ch.backward`.
+
+Loup : `shortcut_first_arc` et `shortcut_second_arc` renvoient l'id du demi-edge du shortcut, mais cet id **n'est pas à utiliser de la même façon** selon qu'on parle du premier ou deuxième demi-edge. Si on parle d'un shortcut de `ch.forward` :
+-  on a vu plus haut que le middle-node `X` avait le rank le plus bas : `X < A < B`
+-  le **SECOND** demi-edge `XB` est donc un edge **FORWARD** (et l'index renvoyé par `shortcut_second_arc` est donc un index dans `ch.forward.head` / `ch.forward.weight` / ...)
+-  de même, le **PREMIER** demi-edge est un edge **BACKWARD** (et l'index renvoyé par `shortcut_first_arc` est donc un index dans `ch.backward.head` / `ch.backward.weight` / ...)
 
 Cas particulier : lorsqu'un edge `E` de `ch.forward` (ou `ch.backward`) est un edge **original**, on peut le retrouver dans les structures passées en entrée de `ContractionHierarchy::build`, à savoir `tail`, `head` et `weight` :
 -  `shortcut_first_arc` contient alors l'index `i` de l'edge original `E` dans `tail`, `head`, et `weight`
