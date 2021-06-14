@@ -92,6 +92,18 @@ Une conséquence à comprendre :
 - si on trouve un shortcut `EF` dans le graphe `ch.backward`, alors on avait forcément `X < E < F` (et le sens de parcours était `F → X → E`), le premier demi-edge `FX` (ou plutôt `XF`) dans le graphe `ch.backward`, et le second demi-edge `XE` est dans `ch.forward`.
 - dans tous les cas, les deux demi-edges sont dans des graphes **Side** différents !
 
+### Stockage des nodes dans les graphes ch.forward et ch.backward
+
+**Point important** : dans les graphes `ch.forward` et `ch.backward`, les nodes sont stockés par leur *rank* (plutôt que par leur *order*).
+
+C'est assez logique, vu que c'est ça qui nous intéresse à la base pour savoir si on a le droit de les parcourir ; mais comme ça n'est PAS comme ça que ch.forward (resp. ch.backward) sont construits (en effet, ils sont construits avec les IDs de node, et non leur rank ! ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L689))), ça m'a confusé au début.
+
+Il est probable qu'une fonction qui vient après `build_ch_and_order` post-processe la structure `ch` pour replacer les ids de nodes par leurs ranks. C'est sans doute l'une de ces 3 fonctions :
+
+- `optimize_order_for_cache` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L902)
+- `make_internal_nodes_and_rank_coincide` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L833)
+- `sort_ch_arcs_and_build_first_out_arrays` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L864)
+
 ### NOTES VRAC À DISPATCHER
 
 #### TO DISPATCH 1
@@ -105,19 +117,6 @@ assert(ch.forward.weight[xy] == ch.backward.weight[ch.forward.shortcut_first_arc
 ```
 
 On s'intéresse au shortcut `xy` dans le graphe `ch.forward`. Son premier demi-edge est dans le graphe `ch.backward`, et son second demi-edge est dans le graphe `ch.forward`, c'est cohérent avec ce qui est décrit plus haut.
-
-
-#### TO DISPATCH 2
-
-Aha, on dirait que dans les "graphes" ch.forward et ch.backward, les nodes sont stockés par leur rank plutôt.
-
-C'est assez logique, vu que c'est ça qui nous intéresse à la base pour savoir si on a le droit de les parcourir ; mais comme ça n'est PAS comme ça que ch.forward (resp. ch.backward) sont construits (en effet, ils sont construits avec les IDs de node, et non leur rank ! ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L689))), ça m'a confusé au début.
-
-Il est probable qu'une fonction qui vient après `build_ch_and_order` post-processe la structure `ch` pour replacer les ids de nodes par leurs ranks. C'est sans doute l'une de ces 3 fonctions :
-
-- `optimize_order_for_cache`
-- `make_internal_nodes_and_rank_coincide`
-- `sort_ch_arcs_and_build_first_out_arrays`
 
 
 #### TO DISPATCH 3
