@@ -154,11 +154,11 @@ assert(ch.forward.weight[xy] == ch.backward.weight[ch.forward.shortcut_first_arc
 
 Interprétation : on s'intéresse au shortcut `xy` dans le graphe `ch.forward`. Son premier demi-edge est dans le graphe `ch.backward`, et son second demi-edge est dans le graphe `ch.forward`, c'est cohérent avec ce qui est décrit plus haut.
 
-#### TO DISPATCH 4
+### Comment unpacker un shortcut ?
 
-Avec ma compréhension fraîche, je peux expliquer le code d'unpacking, exemple avec `get_arc_path` ([lien](https://github.com/RoutingKit/RoutingKit/blob/fb5e83bcd4cf85763fb6877a0b5f8d5736c9a15b/src/contraction_hierarchy.cpp#L1760)) :
+Avec ma compréhension toute fraîche, je peux expliquer le code d'unpacking, exemple avec `get_arc_path` ([lien](https://github.com/RoutingKit/RoutingKit/blob/fb5e83bcd4cf85763fb6877a0b5f8d5736c9a15b/src/contraction_hierarchy.cpp#L1760)) :
 
-- **STEP 1** = à partir du meeting node, on remonte de proche en proche en arrière (jusqu'à la source du trajet, donc) dans le forward-path, en récupérant à chaque fois le prédécesseur de chaque node :
+- **STEP 1** = à partir du meeting node, on remonte de proche en proche en arrière (jusqu'à la source du trajet, donc) dans le forward-path, en récupérant à chaque fois le prédécesseur de chaque node, pour reconstruire le forward-path complet jusqu'au meeting-node :
 
     ```cpp
     std::vector<unsigned>up_path;
@@ -168,7 +168,7 @@ Avec ma compréhension fraîche, je peux expliquer le code d'unpacking, exemple 
         x = forward_predecessor_node[x];
     }
     ```
-- on dispose maintenant du forward-path, sous forme d'une succession d'arcs, dans l'ordre inverse du parcours. Les arcs qui forment ce forward-path sont des **SHORTCUTS**, qu'il faut unpacker.
+- on dispose maintenant du forward-path **contracté**, sous forme d'une succession de nodes (`vector<unsigned>`), dans l'ordre inverse du parcours. Les arcs qui forment ce forward-path sont des **SHORTCUTS**, qu'il faut unpacker.
 - **STEP2** = en les parcourant à l'envers (pour remettre le forward-path dans le bon sens), on unpack chaque arc :
     ```cpp
     for(unsigned i=up_path.size(); i>0; --i){
