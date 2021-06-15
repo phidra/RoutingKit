@@ -64,8 +64,14 @@ Notations :
     * on itère sur tous les triples `A → X → B` possibles : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L567)
     * s'il existe un autre plus court chemin de A à B que passant par X (un **witness-path**, on ne fait rien) : https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L574
     * sinon, c'est qu'il est nécessaire d'insérer un shortcut pour préserver le plus court chemin entre A et B à ce niveau de la hiérarchie
-    * on le fait avec la fonction add_arc_or_reduce_arc_weight ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L579))
-    * TODO = décrire cette fonction : https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L105
+    * on le fait avec la méthode `add_arc_or_reduce_arc_weight` du contraction-graph ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L579))
+- plus de détails sur `add_arc_or_reduce_arc_weight` [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L105) :
+    * c'est une **méthode** du contraction-graph
+    * si je garde mes notations, elle prend en entrée les 3 nodes `A → X → B`, et le poids (+hop_length) du raccourci `AB` qu'on va créer en contractant `X`
+    * cas général = si l'arc `AB` n'existe pas encore dans le contraction-graph, on ajoute `AB` aux out-edges de `A`, et `AB` aux in-edges de `B`
+    * si l'arc `AB` existe déjà dans le contraction-graph ET qu'il avait un poids supérieur, c'est que le shortcut qu'on veut ajouter est plus intéressant que l'edge pré-existant
+    * dans ce cas, on ajoute le nouveau {weight + midnode + hop_length} en remplacement de ceux de l'edge `AB` préexistant
+    * pas hyper-clair (mais pas bien grave) : si `AB` existe déjà dans le contraction-graph, selon qu'il y a plus d'in-edges qui arrivent en `X` ou au contraire d'out-edges qui en repartent, on réduit `AB` ou `BA` ...?
 - mise à jour des voisins 1 = `raise_level` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L713))
 - mise à jour des voisins 2 = update de la clé de queue  ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L714))
 
