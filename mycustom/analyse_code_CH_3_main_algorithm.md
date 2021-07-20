@@ -73,13 +73,13 @@ Notations :
     * dans ce cas, on ajoute le nouveau {weight + midnode + hop_length} en remplacement de ceux de l'edge `AB` préexistant
     * pas hyper-clair (mais pas bien grave) : si `AB` existe déjà dans le contraction-graph, selon qu'il y a plus d'in-edges qui arrivent en `X` ou au contraire d'out-edges qui en repartent, on réduit `AB` ou `BA` ...?
 - mise à jour des voisins 1 = `raise_level` ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L713))
-- mise à jour des voisins 2 = update de la clé de queue  ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L714))
+- mise à jour des voisins 2 = update de la clé de queue  ([lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L714)). En gros, le score des voisins (qui reposait sur nombre de hops, nombre d'edges, et level) du node contracté a changé -> il faut le recalculer, ce qui aura pour effet possible de changer le plus petit élément du heap, donc de changer le prochain node à contracter.
 
-Point de détail (est-ce nécessaire de le metionner ?) = on ignore les boucles : https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L572
+Point de détail (est-ce nécessaire de le mentionner ?) = on ignore les boucles, i.e. les edges d'un noeud sur lui-même : https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L572
 
-Pourquoi ça marche : l'invariant de boucle : au moment où on traite un node de la queue, il n'a d'out-edges que vers des nodes qui auront un ordre supérieur :
+L'objectif = les propagation-graphs `ch.forward` et `ch.backward` ne doivent avoir QUE des edges vers les nodes de rank supérieur.
+
+Pourquoi cette implémentation de la contraction marche ? L'invariant de boucle = au moment où on traite un node de la queue, il n'a d'out-edges que vers des nodes qui auront un ordre supérieur :
 - les nodes traités précédemment ont été retirés du contraction-graph lors de leur contraction en fin de boucle
 - les out-edges du noeud en cours de contraction pointent vers des nodes encore dans le contraction-graph
 - les nodes encore dans le graphe seront traités après, donc auront un rank supérieur
-
-TODO : continuer.

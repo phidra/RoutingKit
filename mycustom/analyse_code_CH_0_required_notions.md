@@ -297,6 +297,7 @@ Sachant que calculer l'ordering qui minimise le nombre de shortcuts est NP-compl
 - facteur 2 = ratio entre le nombre de hops ajoutés si on contracte le node et le nombre de hops supprimés par la contraction du node
 - facteur 3 = le `level` du node en cours de contraction (pas encore très clair)
 
+Le prochain node à être contracté sera le node qui **minimise** cette somme de facteur.
 
 Sa définition : [lien](https://github.com/phidra/RoutingKit/blob/a0776b234ac6e86d4255952ef60a6a9bf8d88f02/src/contraction_hierarchy.cpp#L527) :
 
