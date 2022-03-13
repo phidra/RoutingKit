@@ -144,12 +144,14 @@ Spoiler alert = la réponse est "le middle-node sera le tail d'un edge original 
 
 Préambule = il y a deux trucs contre-intuitifs nécessaires à connaître avant de pouvoir unpacker :
 
-- d'abord, les dénominations `first` et `second` dans `shortcut_first/second_arc` font référence au premier et deuxième demi-edges DANS LE SENS DU GRAPHE ORIGINAL ! Dit autrement, si, sur le graphe original, on a 3 nodes consécutifs `A → X → B`, avec `X` le plus petit des trois :
-    - dans tous les cas, `X → B` sera un edge (original) dans le graphe FORWARD, et `X → A` sera un edge (original ausis) dans le graphe BACKWARD
-    - si `A < B`, on aura le shortcut `A → B` dans le graphe FORWARD. Dans ce cas, `shortcut_first_arc` pointera sur `X → A` dans le graphe BACKWARD, et `shortcut_second_arc` pointera sur `X → B` dans le graphe FORWARD
-    - si `A > B`, on aura le shortcut `B → A` dans le graphe BACKWARD. Dans ce cas, `shortcut_first_arc` pointera... quand même `X → A` dans le graphe BACKWARD ! Et `shortcut_second_arc` pointera aussi sur `X → B` dans le graphe FORWARD
-    - ce qui est contre-intuitif, c'est que selon que le shortcut est forward ou backward, son `shortcut_second_arc` pointera vers l'edge à destination du head du shortcut (si shortcut forward) ou de son tail (si shortcut backward).
-- puis, [ce commentaire](https://github.com/RoutingKit/RoutingKit/blob/fb5e83bcd4cf85763fb6877a0b5f8d5736c9a15b/include/routingkit/contraction_hierarchy.h#L60) n'est valable **QUE** pour les edges backward ! Le commentaire dit que pour les edges originaux, `shortcut_second_arc` pointe vers le tail-node de l'edge, mais en réalité :
+- **FACT 1** = les dénominations `first` et `second` dans `shortcut_first/second_arc` font référence au premier et deuxième demi-edges DANS LE SENS DU GRAPHE ORIGINAL ! C'est contre-intuitif parce que du coup, les dénominations `first` et `second` ne suivent pas l'ordre du graphe dans lequel on trouve le shortcut :
+    - pour un shortcut FORWARD, l'ordre est le même : `shortcut_first_arc` est l'edge entre son tail-node et son middle-node (et `second` est entre le middle et le head)
+    - mais pour un shortcut BACKWARD, l'ordre est "inversé" : `shortcut_first_arc` est l'edge entre son middle-node et son HEAD-node (et `second` est entre le TAIL et le middle)
+    - Dit autrement, si, sur le graphe original, on a 3 nodes consécutifs `A → X → B`, avec `X` le plus petit des trois :
+        - dans tous les cas, `X → B` sera un edge (original) dans le graphe FORWARD, et `X → A` sera un edge (original ausis) dans le graphe BACKWARD
+        - si `A < B`, on aura le shortcut `A → B` dans le graphe FORWARD. Dans ce cas, `shortcut_first_arc` pointera sur `X → A` dans le graphe BACKWARD, et `shortcut_second_arc` pointera sur `X → B` dans le graphe FORWARD
+        - si `A > B`, on aura le shortcut `B → A` dans le graphe BACKWARD. Dans ce cas, `shortcut_first_arc` pointera... quand même `X → A` dans le graphe BACKWARD ! Et `shortcut_second_arc` pointera aussi sur `X → B` dans le graphe FORWARD
+- **FACT 2** = [ce commentaire](https://github.com/RoutingKit/RoutingKit/blob/fb5e83bcd4cf85763fb6877a0b5f8d5736c9a15b/include/routingkit/contraction_hierarchy.h#L60) n'est valable **QUE** pour les edges backward ! Le commentaire dit que pour les edges originaux, `shortcut_second_arc` pointe vers le tail-node de l'edge, mais en réalité :
     - si l'edge original est dans le graphe BACKWARD, alors `shortcut_second_arc` pointe bien vers le tail-node de l'edge
     - si l'edge original est dans le graphe FORWARD, alors `shortcut_second_arc` pointe en fait vers le HEAD de l'edge !
 
