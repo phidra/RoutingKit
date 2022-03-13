@@ -136,6 +136,8 @@ En résumé :
 
 ## Comment unpacker un shortcut — compléments sur `shortcut_second_arc`
 
+**TL;DR** : quel que soit le graphe (forward ou backward) auquel appartient un shortcut, si ce shortcut est en fait un original edge, `shortcut_second_arc` contient le head-node DE L'EDGE SUR LE GRAPHE ORIGINAL.
+
 Rappel du problème : comment unpacker un shortcut = si j'ai un index de shortcut dans un graphe (forward ou backward), comment le transformer en une succession d'edges originaux, ou de leurs nodes ?
 
 NOTE : cette section analyse plus finement l'utilisation de `shortcut_second_arc` pour unpacker les shortcuts. Notamment, dans les structures d'une CH, quand on a un edge (par exemple, quand on a son index = un offset dans les arrays), on a facilement accès à son head, mais pas à son tail, car c'est à plutôt à partir du tail et du `first_out` qu'on a récupéré l'index de l'edge. Or, les deux demi-edges d'un shortcut `A → B` _partent_ du middle-node (car il a le rank le plus faible), du coup, la question est : comment trouver leur tail ? Comment trouver le middle-node du shortcut `A → B` ?
